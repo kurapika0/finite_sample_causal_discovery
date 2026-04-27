@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 
-LOWER_BOUND_WEIGHT_VALUE = 0.4
-UPPER_BOUND_WEIGHT_VALUE = 0.8
+LOWER_BOUND_WEIGHT_VALUE = 0.5
+UPPER_BOUND_WEIGHT_VALUE = 2.0
 LOWER_BOUND_VARIANCE_VALUE = 0.1
-UPPER_BOUND_VARIANCE_VALUE = 0.3
+UPPER_BOUND_VARIANCE_VALUE = 1.0
 
 
 def generate_random_adjacency_matrix(

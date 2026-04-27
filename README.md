@@ -28,12 +28,15 @@ python -m fscd.run \
 ```bash
 python -m fscd.run \
   --algorithms pc ges boss \
-  --nodes 5 10 15 \
+  --nodes 4 6 8 10 \
   --densities 0.2 0.5 0.8 \
   --sample-sizes 20 50 100 500 1000 5000 10000 \
   --runs 50 \
   --output results/pdf_default
 ```
+
+  <!-- --nodes 5 10 15 \ -->
+
 
 ## Test
 

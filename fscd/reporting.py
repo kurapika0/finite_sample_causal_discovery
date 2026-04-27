@@ -9,6 +9,8 @@ import pandas as pd
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+MARKER_STYLES = ("o", "s", "^", "D", "P", "X", "v", "<", ">")
+
 
 def confidence_interval(values: pd.Series) -> dict[str, float]:
     clean = values.dropna().astype(float)
@@ -106,7 +108,7 @@ def plot_results(summary_results: pd.DataFrame, output_dir: Path, algorithms: tu
         ]
 
         for axis, (metric_prefix, title) in zip(axes, metrics):
-            for algorithm in algorithms:
+            for algorithm_index, algorithm in enumerate(algorithms):
                 algorithm_rows = group.loc[group["algorithm"] == algorithm].sort_values("n_samples")
                 if algorithm_rows.empty:
                     continue
@@ -115,9 +117,20 @@ def plot_results(summary_results: pd.DataFrame, output_dir: Path, algorithms: tu
                 mean_values = algorithm_rows[f"{metric_prefix}_mean"].to_numpy(dtype=float)
                 low_values = algorithm_rows[f"{metric_prefix}_ci95_low"].to_numpy(dtype=float)
                 high_values = algorithm_rows[f"{metric_prefix}_ci95_high"].to_numpy(dtype=float)
+                marker_style = MARKER_STYLES[algorithm_index % len(MARKER_STYLES)]
 
-                axis.plot(x_values, mean_values, marker="o", label=algorithm.upper())
-                axis.fill_between(x_values, low_values, high_values, alpha=0.2)
+                line = axis.plot(x_values, mean_values, label=algorithm.upper(), alpha=0.8)[0]
+                axis.scatter(
+                    x_values,
+                    mean_values,
+                    marker=marker_style,
+                    s=48,
+                    color=line.get_color(),
+                    edgecolors="white",
+                    linewidths=0.8,
+                    zorder=3,
+                )
+                axis.fill_between(x_values, low_values, high_values, alpha=0.15)
 
             axis.set_title(title)
             axis.set_ylabel("Distance")
