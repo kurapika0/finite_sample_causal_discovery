@@ -4,25 +4,14 @@ This project benchmarks `PC`, `GES`, and `BOSS` on finite-sample linear Gaussian
 
 ## Setup
 
+Create a virtual environment and install the required packages:
+
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## Run the default PDF-style benchmark
-
-```bash
-python -m fscd.run \
-  --algorithms pc ges boss \
-  --nodes 5 10 15 \
-  --densities 0.2 0.5 0.8 \
-  --sample-sizes 20 50 100 200 300 1000 5000 10000 \
-  --runs 100 \
-  --output results/pdf_default
-```
-
-## Run a smoke benchmark
+## Run a single benchmark
 
 ```bash
 python -m fscd.run \
@@ -34,9 +23,26 @@ python -m fscd.run \
   --output results/smoke
 ```
 
+## Run the default full-configuration benchmark
+
+```bash
+python -m fscd.run \
+  --algorithms pc ges boss \
+  --nodes 5 10 15 \
+  --densities 0.2 0.5 0.8 \
+  --sample-sizes 20 50 100 500 1000 5000 10000 \
+  --runs 50 \
+  --output results/pdf_default
+```
+
 ## Test
 
+For Linux
+```bash
+.venv-linux/bin/python -m pytest
+```
+
+Under your own python environment in other cases
 ```bash
 pytest
 ```
-
