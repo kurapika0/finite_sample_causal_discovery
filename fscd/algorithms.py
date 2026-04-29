@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from functools import lru_cache
 
 import numpy as np
 
@@ -78,11 +79,80 @@ def _patch_causallearn_bic_scores() -> None:
     boss_module.local_score_BIC_from_cov = _patched_local_score_bic_from_cov
 
 
-def run_pc(samples: np.ndarray) -> np.ndarray:
-    from causallearn.search.ConstraintBased.PC import pc
+@lru_cache(maxsize=1)
+def _load_pytetrad_modules() -> tuple[object, object, object]:
+    try:
+        import importlib.resources as importlib_resources
+        import jpype
+        import jpype.imports  # noqa: F401
+        import pytetrad  # noqa: F401
+    except ImportError as exc:  # pragma: no cover - exercised in integration use
+        raise ImportError(
+            "py-tetrad PC requires the 'JPype1' and 'py-tetrad' packages to be installed."
+        ) from exc
 
-    graph = pc(samples, show_progress=False).G
-    return pdag_to_dag_adjacency(graph)
+    jar_path = str(importlib_resources.files("pytetrad").joinpath("resources", "tetrad-current.jar"))
+    if not jpype.isJVMStarted():
+        try:
+            jpype.startJVM(jpype.getDefaultJVMPath(), classpath=[jar_path])
+        except OSError as exc:  # pragma: no cover - exercised in integration use
+            raise RuntimeError(
+                "Failed to start the JVM for py-tetrad. Ensure a compatible JDK is installed."
+            ) from exc
+
+    import pytetrad.tools.translate as tetrad_translate
+    import edu.cmu.tetrad.search as tetrad_search
+    import edu.cmu.tetrad.search.test as tetrad_test
+
+    return tetrad_translate, tetrad_search, tetrad_test
+
+
+def _tetrad_graph_to_matrix(graph: object, node_names: list[str]) -> np.ndarray:
+    endpoint_code = {"NULL": 0, "TAIL": -1, "ARROW": 1, "CIRCLE": 2}
+    name_to_index = {name: idx for idx, name in enumerate(node_names)}
+    matrix = np.zeros((len(node_names), len(node_names)), dtype=int)
+
+    for edge in list(graph.getEdges()):
+        left_name = str(edge.getNode1().getName())
+        right_name = str(edge.getNode2().getName())
+        left_endpoint = edge.getEndpoint1().name()
+        right_endpoint = edge.getEndpoint2().name()
+
+        if left_endpoint not in endpoint_code or right_endpoint not in endpoint_code:
+            raise ValueError(
+                f"Unsupported Tetrad edge endpoints ({left_endpoint}, {right_endpoint}) "
+                f"between {left_name} and {right_name}."
+            )
+
+        left = name_to_index[left_name]
+        right = name_to_index[right_name]
+        matrix[right, left] = endpoint_code[left_endpoint]
+        matrix[left, right] = endpoint_code[right_endpoint]
+
+    return matrix
+
+
+def run_pc(samples: np.ndarray) -> np.ndarray:
+    import pandas as pd
+
+    tetrad_translate, tetrad_search, tetrad_test = _load_pytetrad_modules()
+
+    samples = np.asarray(samples, dtype=float)
+    node_names = [f"X{i}" for i in range(samples.shape[1])]
+    data_frame = pd.DataFrame(samples, columns=node_names)
+    data = tetrad_translate.pandas_data_to_tetrad(data_frame)
+
+    independence_test = tetrad_test.IndTestFisherZ(data, 0.05)
+    algorithm = tetrad_search.Pc(independence_test)
+    algorithm.setFasStable(True)
+    algorithm.setColliderOrientationStyle(tetrad_search.Pc.ColliderOrientationStyle.MAX_P)
+    algorithm.setAllowBidirected(tetrad_search.Pc.AllowBidirected.DISALLOW)
+    algorithm.setForbidDirectedCycles(True)
+    algorithm.setMeekCycleSafe(True)
+
+    graph = algorithm.search()
+    matrix = _tetrad_graph_to_matrix(graph, node_names)
+    return pdag_to_dag_adjacency(matrix)
 
 
 def run_ges(samples: np.ndarray) -> np.ndarray:

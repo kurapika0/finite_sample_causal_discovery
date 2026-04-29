@@ -108,7 +108,7 @@ def assert_supported_general_graph(graph_or_matrix: object) -> None:
 def pdag_to_dag_adjacency(graph: object) -> np.ndarray:
     general_graph = getattr(graph, "G", graph)
     assert_supported_general_graph(general_graph)
-    matrix = np.asarray(general_graph.graph, dtype=int)
+    matrix = np.asarray(getattr(general_graph, "graph", general_graph), dtype=int)
     adjacency = general_graph_to_adjacency(matrix)
     order = topological_order(adjacency)
     order_index = {node: index for index, node in enumerate(order)}

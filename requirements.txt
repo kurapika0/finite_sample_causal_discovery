@@ -3,5 +3,6 @@ pandas
 scipy
 matplotlib
 causal-learn
+JPype1
+git+https://github.com/cmu-phil/py-tetrad
 pytest
-
