@@ -5,7 +5,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from fscd.graphs import pdag_to_dag_adjacency
+from fscd.graphs import graph_to_matrix
 
 SUPPORTED_ALGORITHMS = ("pc", "ges", "boss")
 
@@ -151,8 +151,7 @@ def run_pc(samples: np.ndarray) -> np.ndarray:
     algorithm.setMeekCycleSafe(True)
 
     graph = algorithm.search()
-    matrix = _tetrad_graph_to_matrix(graph, node_names)
-    return pdag_to_dag_adjacency(matrix)
+    return _tetrad_graph_to_matrix(graph, node_names)
 
 
 def run_ges(samples: np.ndarray) -> np.ndarray:
@@ -160,7 +159,7 @@ def run_ges(samples: np.ndarray) -> np.ndarray:
 
     _patch_causallearn_bic_scores()
     graph = ges(samples)["G"]
-    return pdag_to_dag_adjacency(graph)
+    return graph_to_matrix(graph)
 
 
 def run_boss(samples: np.ndarray) -> np.ndarray:
@@ -168,7 +167,7 @@ def run_boss(samples: np.ndarray) -> np.ndarray:
 
     _patch_causallearn_bic_scores()
     graph = boss(samples, verbose=False)
-    return pdag_to_dag_adjacency(graph)
+    return graph_to_matrix(graph)
 
 
 def algorithm_registry() -> dict[str, Callable[[np.ndarray], np.ndarray]]:

@@ -5,12 +5,12 @@ import math
 import numpy as np
 from scipy.optimize import Bounds, LinearConstraint, milp
 
-from fscd.graphs import adjacency_edge_list, adjacency_to_skeleton_upper, is_dag
+from fscd.graphs import adjacency_edge_list, adjacency_to_skeleton_upper, general_graph_to_adjacency, is_dag
 
 
-def skeleton_distance(adjacency_a: np.ndarray, adjacency_b: np.ndarray) -> int:
-    skeleton_a = adjacency_to_skeleton_upper(adjacency_a)
-    skeleton_b = adjacency_to_skeleton_upper(adjacency_b)
+def skeleton_distance(graph_a: object, graph_b: object) -> int:
+    skeleton_a = adjacency_to_skeleton_upper(graph_a)
+    skeleton_b = adjacency_to_skeleton_upper(graph_b)
     return int(np.count_nonzero(skeleton_a != skeleton_b))
 
 
@@ -28,14 +28,14 @@ def kendall_tau_distance(order_a: list[int], order_b: list[int]) -> int:
     return inversions
 
 
-def exact_permutation_distance(adjacency_a: np.ndarray, adjacency_b: np.ndarray) -> int:
-    adjacency_a = np.asarray(adjacency_a, dtype=int)
-    adjacency_b = np.asarray(adjacency_b, dtype=int)
+def exact_permutation_distance(graph_a: object, graph_b: object) -> int:
+    adjacency_a = general_graph_to_adjacency(graph_a)
+    adjacency_b = general_graph_to_adjacency(graph_b)
 
     if adjacency_a.shape != adjacency_b.shape:
-        raise ValueError("Both DAGs must have the same shape.")
+        raise ValueError("Both graphs must have the same shape.")
     if not is_dag(adjacency_a) or not is_dag(adjacency_b):
-        raise ValueError("Permutation distance requires DAG inputs.")
+        raise ValueError("Permutation distance requires acyclic directed constraints.")
 
     num_nodes = adjacency_a.shape[0]
     if num_nodes <= 1:
@@ -149,4 +149,3 @@ def exact_permutation_distance(adjacency_a: np.ndarray, adjacency_b: np.ndarray)
         raise RuntimeError(f"MILP failed with status {result.status}: {result.message}")
 
     return int(round(float(result.fun)))
-

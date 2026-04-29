@@ -40,12 +40,6 @@ python -m fscd.run \
 
 ## Test
 
-For Linux
-```bash
-.venv-linux/bin/python -m pytest
-```
-
-Under your own python environment in other cases
 ```bash
 pytest
 ```
