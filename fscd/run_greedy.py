@@ -28,9 +28,6 @@ DEFAULT_K_MAX = 10
 DEFAULT_RUNS = 50
 DEFAULT_SEED = 0
 DEFAULT_OUTPUT = "results/greedy_default"
-DEFAULT_PLOT_SAMPLE_SIZES = (20, 500, 10000)
-DEFAULT_PLOT_EPSILON = 1
-DEFAULT_PLOT_DELTA = 1
 
 
 @dataclass
@@ -44,9 +41,9 @@ class GreedyBenchmarkConfig:
     runs: int
     seed: int
     output_dir: Path
-    plot_sample_sizes: tuple[int, ...]
-    plot_epsilon: int
-    plot_delta: int
+    plot_sample_sizes: tuple[int, ...] | None
+    plot_epsilon: int | None
+    plot_delta: int | None
 
     @classmethod
     def from_namespace(cls, namespace: object) -> "GreedyBenchmarkConfig":
@@ -55,7 +52,7 @@ class GreedyBenchmarkConfig:
         elif namespace.plot_sample_size_legacy is not None:
             plot_sample_sizes = tuple(int(value) for value in namespace.plot_sample_size_legacy)
         else:
-            plot_sample_sizes = tuple(DEFAULT_PLOT_SAMPLE_SIZES)
+            plot_sample_sizes = None
 
         config = cls(
             nodes=tuple(int(value) for value in namespace.nodes),
@@ -68,8 +65,8 @@ class GreedyBenchmarkConfig:
             seed=int(namespace.seed),
             output_dir=Path(namespace.output),
             plot_sample_sizes=plot_sample_sizes,
-            plot_epsilon=int(namespace.plot_epsilon),
-            plot_delta=int(namespace.plot_delta),
+            plot_epsilon=None if namespace.plot_epsilon is None else int(namespace.plot_epsilon),
+            plot_delta=None if namespace.plot_delta is None else int(namespace.plot_delta),
         )
         config.validate()
         return config
@@ -89,11 +86,13 @@ class GreedyBenchmarkConfig:
             raise ValueError("k_max must be positive.")
         if self.runs <= 0:
             raise ValueError("runs must be positive.")
-        if not self.plot_sample_sizes or any(size <= 0 for size in self.plot_sample_sizes):
+        if self.plot_sample_sizes is not None and (
+            not self.plot_sample_sizes or any(size <= 0 for size in self.plot_sample_sizes)
+        ):
             raise ValueError("plot_sample_sizes must contain positive values.")
-        if self.plot_epsilon < 0:
+        if self.plot_epsilon is not None and self.plot_epsilon < 0:
             raise ValueError("plot_epsilon must be non-negative.")
-        if self.plot_delta < 0:
+        if self.plot_delta is not None and self.plot_delta < 0:
             raise ValueError("plot_delta must be non-negative.")
 
     def to_metadata(self) -> dict[str, object]:
@@ -115,8 +114,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output", default=DEFAULT_OUTPUT)
     parser.add_argument("--plot-sample-sizes", nargs="+", type=int, default=None)
     parser.add_argument("--plot-sample-size", dest="plot_sample_size_legacy", action="append", type=int, default=None)
-    parser.add_argument("--plot-epsilon", type=int, default=DEFAULT_PLOT_EPSILON)
-    parser.add_argument("--plot-delta", type=int, default=DEFAULT_PLOT_DELTA)
+    parser.add_argument("--plot-epsilon", type=int, default=None)
+    parser.add_argument("--plot-delta", type=int, default=None)
     return parser
 
 
@@ -325,15 +324,29 @@ def benchmark_greedy(
     recovery_results = summarize_recovery_results(raw_results, config.k_max)
     recovery_results.to_csv(recovery_results_path, index=False)
 
-    for plot_sample_size in dict.fromkeys(config.plot_sample_sizes):
+    plot_summary = summary_results
+    if config.plot_sample_sizes is not None:
+        plot_summary = plot_summary.loc[plot_summary["n_samples"].isin(config.plot_sample_sizes)]
+    if config.plot_epsilon is not None:
+        plot_summary = plot_summary.loc[plot_summary["epsilon"] == config.plot_epsilon]
+    if config.plot_delta is not None:
+        plot_summary = plot_summary.loc[plot_summary["delta"] == config.plot_delta]
+
+    plot_specs = (
+        plot_summary.loc[:, ["d", "density", "epsilon", "delta", "n_samples"]]
+        .drop_duplicates()
+        .sort_values(["d", "density", "epsilon", "delta", "n_samples"])
+        .itertuples(index=False, name=None)
+    )
+    for nodes, density, epsilon, delta, n_samples in plot_specs:
         plot_topk_distances(
             summary_results=summary_results,
             output_dir=output_dir,
-            nodes=config.nodes[0],
-            density=config.densities[0],
-            epsilon=config.plot_epsilon,
-            delta=config.plot_delta,
-            n_samples=int(plot_sample_size),
+            nodes=int(nodes),
+            density=float(density),
+            epsilon=int(epsilon),
+            delta=int(delta),
+            n_samples=int(n_samples),
         )
 
     return raw_results, summary_results, recovery_results

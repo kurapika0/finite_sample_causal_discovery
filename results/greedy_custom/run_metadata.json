@@ -1,12 +1,14 @@
 {
   "nodes": [
-    6
+    5
   ],
   "densities": [
     0.4
   ],
   "sample_sizes": [
-    1000
+    20,
+    500,
+    10000
   ],
   "epsilons": [
     1,
@@ -20,14 +22,10 @@
   "runs": 50,
   "seed": 0,
   "output_dir": "results/greedy_custom",
-  "plot_sample_sizes": [
-    20,
-    500,
-    10000
-  ],
-  "plot_epsilon": 1,
-  "plot_delta": 1,
-  "created_at_utc": "2026-04-30T19:11:22.365759+00:00",
-  "python_version": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
-  "platform": "Linux-6.8.0-106-generic-x86_64-with-glibc2.39"
+  "plot_sample_sizes": null,
+  "plot_epsilon": null,
+  "plot_delta": null,
+  "created_at_utc": "2026-05-11T11:11:56.231617+00:00",
+  "python_version": "3.10.20 | packaged by conda-forge | (main, Mar  5 2026, 17:06:34) [Clang 19.1.7 ]",
+  "platform": "macOS-15.7.5-arm64-arm-64bit"
 }

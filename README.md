@@ -71,7 +71,7 @@ The default output directory is `results/greedy_default`, which contains:
 - `raw_topk_results.csv`: one row per `(run_id, n_samples, epsilon, delta, k)`
 - `summary_topk_results.csv`: aggregated `ds/dp/BIC/found_true_by_k` statistics
 - `recovery_summary.csv`: Top-`K_max` recovery summary for each parameter setting
-- `plots/topk_distances_*.png`: representative `ds` and `dp` vs `K` figures for `n=20`, `500`, and `10000`
+- `plots/topk_distances_*.png`: `ds` and `dp` vs `K` figures for every `(d, density, n_samples, epsilon, delta)` combination successfully summarized in the run
 
 Example with explicit arguments:
 
@@ -79,20 +79,18 @@ Example with explicit arguments:
 python -m fscd.run_greedy \
   --nodes 5 \
   --densities 0.4 \
-  --sample-sizes 50 500 10000 \
+  --sample-sizes 20 500 10000 \
   --epsilons 1 2 \
   --deltas 1 2 \
   --k-max 10 \
   --runs 50 \
-  --output results/greedy_custom \
-  --plot-sample-sizes 20 500 10000 \
-  --plot-epsilon 1 \
-  --plot-delta 1
+  --output results/greedy_custom
 ```
 
+Optional plotting filters:
 
-## Test
+- `--plot-sample-sizes ...`: only generate figures for the selected sample sizes
+- `--plot-epsilon ...`: only generate figures for the selected `epsilon`
+- `--plot-delta ...`: only generate figures for the selected `delta`
 
-```bash
-pytest
-```
+If you omit these filters, `run_greedy` now plots every parameter combination that was actually run and successfully summarized.
