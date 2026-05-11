@@ -1,0 +1,2 @@
+d,density,n_samples,epsilon,delta,n_runs,n_success,success_rate_within_kmax,recover_k_mean_found_only,recover_k_std_found_only,recover_k_ci95_low_found_only,recover_k_ci95_high_found_only
+8,0.4,1000,2,2,50,46,0.92,1.8043478260869565,2.1147058131873813,1.193226956981536,2.415468695192377

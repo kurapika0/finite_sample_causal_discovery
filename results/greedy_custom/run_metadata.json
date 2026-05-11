@@ -1,0 +1,33 @@
+{
+  "nodes": [
+    6
+  ],
+  "densities": [
+    0.4
+  ],
+  "sample_sizes": [
+    1000
+  ],
+  "epsilons": [
+    1,
+    2
+  ],
+  "deltas": [
+    1,
+    2
+  ],
+  "k_max": 10,
+  "runs": 50,
+  "seed": 0,
+  "output_dir": "results/greedy_custom",
+  "plot_sample_sizes": [
+    20,
+    500,
+    10000
+  ],
+  "plot_epsilon": 1,
+  "plot_delta": 1,
+  "created_at_utc": "2026-04-30T19:11:22.365759+00:00",
+  "python_version": "3.12.3 (main, Mar 23 2026, 19:04:32) [GCC 13.3.0]",
+  "platform": "Linux-6.8.0-106-generic-x86_64-with-glibc2.39"
+}

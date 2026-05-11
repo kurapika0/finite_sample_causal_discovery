@@ -5,7 +5,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from fscd.graphs import graph_to_matrix
+from fscd.graphs import general_graph_to_adjacency, graph_to_matrix, is_dag
 
 SUPPORTED_ALGORITHMS = ("pc", "ges", "boss")
 
@@ -60,6 +60,33 @@ def _patched_local_score_bic_from_cov(data: tuple[np.ndarray, int], node: int, p
     likelihood = -0.5 * n_samples * (1 + np.log(sigma))
     penalty = lambda_value * (len(parents) + 1) * np.log(n_samples)
     return float(likelihood - penalty)
+
+
+def score_dag_bic_from_cov(
+    graph_or_matrix: object,
+    cov: np.ndarray,
+    n_samples: int,
+    lambda_value: float = 0.5,
+) -> float:
+    adjacency = general_graph_to_adjacency(graph_or_matrix)
+    cov = np.asarray(cov, dtype=float)
+
+    if adjacency.ndim != 2 or adjacency.shape[0] != adjacency.shape[1]:
+        raise ValueError("Expected a square DAG adjacency matrix.")
+    if cov.shape != adjacency.shape:
+        raise ValueError("Covariance matrix shape must match the DAG adjacency matrix.")
+    if n_samples <= 0:
+        raise ValueError("Sample size must be positive.")
+    if not is_dag(adjacency):
+        raise ValueError("BIC scoring requires a DAG adjacency.")
+
+    parameters = {"lambda_value": float(lambda_value)}
+    total_score = 0.0
+    for node in range(adjacency.shape[0]):
+        parents = np.flatnonzero(adjacency[:, node]).astype(int).tolist()
+        total_score += _patched_local_score_bic_from_cov((cov, int(n_samples)), node, parents, parameters)
+
+    return float(total_score)
 
 
 _patched_local_score_bic.__name__ = "local_score_BIC"
